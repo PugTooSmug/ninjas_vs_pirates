@@ -10,7 +10,6 @@ sky
 ball
 cup
 top
-car
 bus
 bed
 fan
