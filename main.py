@@ -129,6 +129,7 @@ def main():
         pygame.draw.rect(screen, (35, 41, 68), (0, 0, WIDTH, 110))
         pygame.draw.rect(screen, (40, 60, 90), (50, 420, WIDTH - 100, 100), border_radius=12)
 
+
         draw_text(screen, "Ninja vs Pirate — Type the word to reach the treasure!", WIDTH // 2, 20, size=30, center=True)
         draw_text(screen, f"Score: {state['score']}", 50, 20, size=28)
         draw_text(screen, state["message"], 50, 60, size=24, color=ACCENT_COLOR)
@@ -146,11 +147,20 @@ def main():
 
         # Word display
         draw_text(screen, "Current word:", 50, 140, size=26)
-        hidden_word = state["current_word"]
-        typed_colored = "".join(
-            [f"[{c.upper()}]" if idx < len(state["typed"]) else c.upper() for idx, c in enumerate(hidden_word)]
-        )
-        draw_text(screen, typed_colored, 50, 180, size=48, color=ACCENT_COLOR)
+
+        # Animated reveal: each letter drawn separately, centered horizontally
+        word = state["current_word"]
+        letter_spacing = 25
+        font = pygame.font.SysFont("arial", 48, bold=True)
+        char_widths = [font.render(char.upper(), True, TEXT_COLOR).get_width() for char in word]
+        total_width = sum(char_widths) + letter_spacing * (len(word) - 1) if len(word) > 0 else 0
+        start_x = WIDTH // 2 - total_width // 2
+        x = start_x
+        for i, char in enumerate(word):
+            color = ACCENT_COLOR if i < len(state["typed"]) else TEXT_COLOR
+            draw_text(screen, char.upper(), x, 180, size=48, color=color)
+            x += char_widths[i] + letter_spacing
+
 
         draw_text(screen, f"Typed: {state['typed'].upper()}", 50, 240, size=28)
 
