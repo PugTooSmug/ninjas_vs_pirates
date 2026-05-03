@@ -7,6 +7,7 @@ import pygame
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 IMAGES_DIR = os.path.join(BASE_DIR, "images")
 WORDS_FILE = os.path.join(BASE_DIR, "words", "words.txt")
+CRAB_WORDS_FILE = os.path.join(BASE_DIR, "words", "crab_words.txt")
 
 WIDTH = 900
 HEIGHT = 560
@@ -19,13 +20,13 @@ TREASURE_COLOR = (212, 175, 55)
 
 NINJA_START_X = 100
 PIRATE_START_X = 100
-TARGET_X = 700
+TARGET_X = 760
 
-NINJA_STEP = 60
-PIRATE_STEP = 28
+NINJA_STEP = 45
+PIRATE_STEP = 20
 
 
-def load_words(path):
+def load_words(path, min_length=3):
     if os.path.exists(path):
         with open(path, encoding="utf-8") as f:
             words = [line.strip().lower() for line in f if line.strip()]
@@ -68,6 +69,9 @@ def reset_game(state, words):
     state["message"] = "Type the letters to move the ninja!"
     state["game_over"] = False
     state["winner"] = None
+    state["crab_mode"] = False
+    state["crab_done"] = False
+    state["normal_words_finished"] = 0
 
 
 def main():
@@ -76,13 +80,15 @@ def main():
     clock = pygame.time.Clock()
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
 
-    words = load_words(WORDS_FILE)
+    words = load_words(WORDS_FILE, min_length=3)
+    crab_words = load_words(CRAB_WORDS_FILE, min_length=4)
     state = {}
     reset_game(state, words)
 
     ninja_sprite = load_sprite("ninja.png", (120, 120), (49, 121, 217))
     pirate_sprite = load_sprite("pirate.png", (120, 120), (210, 81, 81))
     treasure_sprite = load_sprite("treasure.png", (100, 100), TREASURE_COLOR)
+    crab_sprite = load_sprite("crab.png", (100, 80), (224, 98, 18))
 
     while True:
         for event in pygame.event.get():
@@ -111,9 +117,22 @@ def main():
                 if state["typed"] == state["current_word"]:
                     state["score"] += 1
                     state["typed"] = ""
-                    state["current_word"] = random.choice(words)
                     state["pirate_x"] += PIRATE_STEP
-                    state["message"] = "Word complete! New challenge ahead."
+
+                    if state["crab_mode"]:
+                        state["crab_mode"] = False
+                        state["current_word"] = random.choice(words)
+                        state["message"] = "Crab defeated! Back to regular words."
+                    else:
+                        state["normal_words_finished"] += 1
+                        if not state["crab_done"] and state["normal_words_finished"] >= 2 and random.random() < 0.35:
+                            state["crab_mode"] = True
+                            state["crab_done"] = True
+                            state["current_word"] = random.choice(crab_words)
+                            state["message"] = "🦀 Crab Attack! Type the mini-boss word!"
+                        else:
+                            state["current_word"] = random.choice(words)
+                            state["message"] = "Word complete! New challenge ahead."
 
         if not state["game_over"]:
             if state["ninja_x"] >= TARGET_X - 70:
@@ -130,7 +149,11 @@ def main():
         pygame.draw.rect(screen, (40, 60, 90), (50, 420, WIDTH - 100, 100), border_radius=12)
 
 
-        draw_text(screen, "Ninja vs Pirate — Type the word to reach the treasure!", WIDTH // 2, 20, size=30, center=True)
+        if state["crab_mode"]:
+            draw_text(screen, "CRAB ATTACK!", WIDTH // 2, 20, size=36, color=ERROR_COLOR, center=True)
+        else:
+            draw_text(screen, "Ninja vs Pirate — Type the word to reach the treasure!", WIDTH // 2, 20, size=30, center=True)
+
         draw_text(screen, f"Score: {state['score']}", 50, 20, size=28)
         draw_text(screen, state["message"], 50, 60, size=24, color=ACCENT_COLOR)
 
@@ -144,6 +167,10 @@ def main():
         pirate_pos = (state["pirate_x"], 380)
         screen.blit(ninja_sprite, ninja_pos)
         screen.blit(pirate_sprite, pirate_pos)
+
+        if state["crab_mode"]:
+            crab_pos = (state["ninja_x"] + 130, 260)
+            screen.blit(crab_sprite, crab_pos)
 
         # Word display
         draw_text(screen, "Current word:", 50, 140, size=26)

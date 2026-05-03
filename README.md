@@ -34,6 +34,11 @@ python main.py
 ## How to customize
 
 - Add more words to `words/words.txt`
+- Add special crab challenge words to `words/crab_words.txt`
 - Replace sprites in `images/`
 - Adjust `NINJA_STEP` and `PIRATE_STEP` in `main.py` for movement speed
 - Add sound effects inside the game loop
+
+## Crab Attack Mode
+
+After the player finishes at least two regular words, there is a one-time chance for a special Crab Attack event. When it triggers, a 4-letter crab word appears as a mini-boss challenge before the game returns to normal words.
